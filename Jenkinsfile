@@ -58,7 +58,7 @@ pipeline {
                 dir('project4') {
                     withSonarQubeEnv('sonarqube') {
                         sh '''
-                            sonar-scanner \
+                            sonarscanner \
                               -Dsonar.projectKey=project04 \
                               -Dsonar.projectName=Project04 \
                               -Dsonar.sources=. \
