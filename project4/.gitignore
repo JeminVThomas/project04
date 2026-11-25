@@ -1,0 +1,26 @@
+# Python
+venv/
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+
+# Database files and backups
+*.sqlite3
+*.sql
+*.dump
+
+# Reports
+reports/
+
+# Logs
+*.log
+
+# IDE
+.vscode/
+.idea/
+.venv/

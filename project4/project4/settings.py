@@ -20,12 +20,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-9ner6&*pf^owxz+*ibdgpw8*gh@$ejgq2hm2-fxzt6ky3^+_rx'
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'development-only-change-me')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get('DJANGO_DEBUG', 'False').lower() == 'true'
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 
 
 # Application definition
@@ -77,18 +77,16 @@ WSGI_APPLICATION = 'project4.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        #'NAME': BASE_DIR / 'db.sqlite3',
-        'NAME':'complaint_db',
-        'HOST':'localhost',
-        'USER':'root',
-        'PASSWORD':'',
-        'PORT':'3306',
-        'OPTIONS':{
-            'init_command':"SET sql_mode='STRICT_TRANS_TABLES'",
+        'NAME': os.environ.get('DB_NAME', 'complaint_db'),
+        'HOST': os.environ.get('DB_HOST', 'localhost'),
+        'USER': os.environ.get('DB_USER', 'root'),
+        'PASSWORD': os.environ.get('DB_PASSWORD', ''),
+        'PORT': os.environ.get('DB_PORT', '3306'),
+        'OPTIONS': {
+            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
         }
     }
 }
-
 
 
 # Password validation
