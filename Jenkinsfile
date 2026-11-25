@@ -17,18 +17,17 @@ pipeline {
     stages {
 
         stage('Checkout') {
-            steps {
-                checkout scm
-                script {
-                        script: 'git rev-parse --short=7 HEAD',
-                        returnStdout: true
-                    ).trim()
+    steps {
+        checkout scm
 
-                    env.IMAGE_URI =
-                        "${ECR_REGISTRY}/${ECR_REPOSITORY}:${IMAGE_TAG}"
-                }
-            }
+        script {
+            env.IMAGE_TAG = env.GIT_COMMIT.take(7)
+
+            env.IMAGE_URI =
+                "${ECR_REGISTRY}/${ECR_REPOSITORY}:${env.IMAGE_TAG}"
         }
+    }
+}
 
         stage('Install Dependencies') {
             steps {
