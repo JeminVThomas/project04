@@ -87,20 +87,37 @@ pipeline {
             }
         }
 
-        stage('Push Image to ECR') {
-            steps {
-                sh '''
-                    aws ecr get-login-password \
-                        --region ${AWS_REGION} \
-                    | docker login \
-                        --username AWS \
-                        --password-stdin \
-                        ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
+        
+stage('Push Image to ECR') {
+    steps {
+        withCredentials([
+            usernamePassword(
+                credentialsId: 'aws-ecr-credentials',
+                usernameVariable: 'AWS_ACCESS_KEY_ID',
+                passwordVariable: 'AWS_SECRET_ACCESS_KEY'
+            )
+        ]) {
+            sh '''
+                set -e
 
-                    docker push ${IMAGE_URI}:${IMAGE_TAG}
-                '''
-            }
+                export AWS_DEFAULT_REGION=ap-south-1
+
+                echo "Logging in to Amazon ECR..."
+
+                aws ecr get-login-password --region ap-south-1 |
+                docker login \
+                    --username AWS \
+                    --password-stdin 994878981749.dkr.ecr.ap-south-1.amazonaws.com
+
+                echo "Pushing Docker image..."
+
+                docker push 994878981749.dkr.ecr.ap-south-1.amazonaws.com/project04:${IMAGE_TAG}
+
+                echo "Image pushed successfully."
+            '''
         }
+    }
+}
 
         stage('Update Kubernetes Manifest') {
             steps {
