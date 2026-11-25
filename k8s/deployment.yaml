@@ -1,0 +1,27 @@
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: project04
+  labels:
+    app: project04
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: project04
+  template:
+    metadata:
+      labels:
+        app: project04
+    spec:
+      containers:
+        - name: project04
+          image: 994878981749.dkr.ecr.ap-south-1.amazonaws.com/project04:initial
+          ports:
+            - containerPort: 8000
+          envFrom:
+            - configMapRef:
+                name: project04-config
+            - secretRef:
+                name: project04-secrets
