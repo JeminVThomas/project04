@@ -87,87 +87,85 @@ pipeline {
             }
         }
 
-        
-stage('Push Image to ECR') {
-    steps {
-        withCredentials([
-            usernamePassword(
-                credentialsId: 'aws-ecr-credentials',
-                usernameVariable: 'AWS_ACCESS_KEY_ID',
-                passwordVariable: 'AWS_SECRET_ACCESS_KEY'
-            )
-        ]) {
-            sh '''
-                set -e
+        stage('Push Image to ECR') {
+            steps {
+                withCredentials([
+                    usernamePassword(
+                        credentialsId: 'aws-ecr-credentials',
+                        usernameVariable: 'AWS_ACCESS_KEY_ID',
+                        passwordVariable: 'AWS_SECRET_ACCESS_KEY'
+                    )
+                ]) {
+                    sh '''
+                        set -e
 
-                export AWS_DEFAULT_REGION=ap-south-1
+                        export AWS_DEFAULT_REGION=ap-south-1
 
-                echo "Logging in to Amazon ECR..."
+                        echo "Logging in to Amazon ECR..."
 
-                aws ecr get-login-password --region ap-south-1 |
-                docker login \
-                    --username AWS \
-                    --password-stdin 994878981749.dkr.ecr.ap-south-1.amazonaws.com
+                        aws ecr get-login-password --region ap-south-1 |
+                        docker login \
+                            --username AWS \
+                            --password-stdin 994878981749.dkr.ecr.ap-south-1.amazonaws.com
 
-                echo "Pushing Docker image..."
+                        echo "Pushing Docker image..."
 
-                docker push 994878981749.dkr.ecr.ap-south-1.amazonaws.com/project04:${IMAGE_TAG}
+                        docker push ${IMAGE_URI}:${IMAGE_TAG}
 
-                echo "Image pushed successfully."
-            '''
+                        echo "Image pushed successfully."
+                    '''
+                }
+            }
         }
-    }
-}
 
-        
-stage('Update Kubernetes Manifest') {
-    steps {
-        script {
-            sh '''
-                set -e
+        stage('Update Kubernetes Manifest') {
+            steps {
+                script {
+                    sh '''
+                        set -e
 
-                if [ ! -f k8s/deployment.yaml ]; then
-                    echo "ERROR: k8s/deployment.yaml not found"
-                    exit 1
-                fi
+                        if [ ! -f k8s/deployment.yaml ]; then
+                            echo "ERROR: k8s/deployment.yaml not found"
+                            exit 1
+                        fi
 
-                sed -i -E \
-                  "s|(^[[:space:]]*image:[[:space:]]*).*|\\1${IMAGE_URI}:${IMAGE_TAG}|" \
-                  k8s/deployment.yaml
+                        sed -i -E \
+                          "s|(^[[:space:]]*image:[[:space:]]*).*|\\1${IMAGE_URI}:${IMAGE_TAG}|" \
+                          k8s/deployment.yaml
 
-                git config user.name "Jenkins"
-                git config user.email "jenkins@example.com"
+                        git config user.name "Jenkins"
+                        git config user.email "jenkins@example.com"
 
-                git add k8s/deployment.yaml
+                        git add k8s/deployment.yaml
 
-                if git diff --cached --quiet; then
-                    echo "Kubernetes manifest already contains this image."
-                else
-                    git commit -m "Update project04 image to ${IMAGE_TAG}"
-                    echo "Kubernetes manifest updated."
-                fi
-            '''
+                        if git diff --cached --quiet; then
+                            echo "Kubernetes manifest already contains this image."
+                        else
+                            git commit -m "Update project04 image to ${IMAGE_TAG}"
+                            echo "Kubernetes manifest updated."
+                        fi
+                    '''
 
-            withCredentials([
-                usernamePassword(
-                    credentialsId: 'github',
-                    usernameVariable: 'GITHUB_USER',
-                    passwordVariable: 'GITHUB_TOKEN'
-                )
-            ]) {
-                sh '''
-                    set +x
+                    withCredentials([
+                        usernamePassword(
+                            credentialsId: 'github',
+                            usernameVariable: 'GITHUB_USER',
+                            passwordVariable: 'GITHUB_TOKEN'
+                        )
+                    ]) {
+                        sh '''
+                            set +x
 
-                    AUTH=$(printf '%s:%s' "$GITHUB_USER" "$GITHUB_TOKEN" | base64 -w0)
+                            AUTH=$(printf '%s:%s' "$GITHUB_USER" "$GITHUB_TOKEN" | base64 -w0)
 
-                    git -c http.extraheader="AUTHORIZATION: basic $AUTH" \
-                        push origin HEAD:main
-                '''
+                            git -c http.extraheader="AUTHORIZATION: basic $AUTH" \
+                                push origin HEAD:main
+                        '''
+                    }
+                }
             }
         }
     }
-}
-
 
     post {
         success {
@@ -183,5 +181,4 @@ stage('Update Kubernetes Manifest') {
             echo "Pipeline execution finished."
         }
     }
-}
 }
