@@ -119,54 +119,55 @@ stage('Push Image to ECR') {
     }
 }
 
-        stage('Update Kubernetes Manifest') {
-            steps {
-                script {
-                    sh '''
-                        set -e
+        
+stage('Update Kubernetes Manifest') {
+    steps {
+        script {
+            sh '''
+                set -e
 
-                        if [ ! -f k8s/deployment.yaml ]; then
-                            echo "ERROR: k8s/deployment.yaml not found"
-                            exit 1
-                        fi
+                if [ ! -f k8s/deployment.yaml ]; then
+                    echo "ERROR: k8s/deployment.yaml not found"
+                    exit 1
+                fi
 
-                        sed -i -E \
-                          "s|(^[[:space:]]*image:[[:space:]]*).*|\\1${IMAGE_URI}:${IMAGE_TAG}|" \
-                          k8s/deployment.yaml
+                sed -i -E \
+                  "s|(^[[:space:]]*image:[[:space:]]*).*|\\1${IMAGE_URI}:${IMAGE_TAG}|" \
+                  k8s/deployment.yaml
 
-                        git config user.name "Jenkins"
-                        git config user.email "jenkins@example.com"
+                git config user.name "Jenkins"
+                git config user.email "jenkins@example.com"
 
-                        git add k8s/deployment.yaml
+                git add k8s/deployment.yaml
 
-                        if git diff --cached --quiet; then
-                            echo "Kubernetes manifest already contains this image."
-                        else
-                            git commit -m "Update project04 image to ${IMAGE_TAG}"
+                if git diff --cached --quiet; then
+                    echo "Kubernetes manifest already contains this image."
+                else
+                    git commit -m "Update project04 image to ${IMAGE_TAG}"
+                    echo "Kubernetes manifest updated."
+                fi
+            '''
 
-                            echo "Kubernetes manifest updated."
-                        fi
-                    '''
+            withCredentials([
+                usernamePassword(
+                    credentialsId: 'github',
+                    usernameVariable: 'GITHUB_USER',
+                    passwordVariable: 'GITHUB_TOKEN'
+                )
+            ]) {
+                sh '''
+                    set +x
 
-                    withCredentials([
-                        string(
-                            credentialsId: 'github',
-                            variable: 'GITHUB_TOKEN'
-                        )
-                    ]) {
-                        sh '''
-                            set +x
+                    AUTH=$(printf '%s:%s' "$GITHUB_USER" "$GITHUB_TOKEN" | base64 -w0)
 
-                            AUTH=$(printf 'x-access-token:%s' "$GITHUB_TOKEN" | base64 -w0)
-
-                            git -c http.extraheader="AUTHORIZATION: basic $AUTH" \
-                                push origin HEAD:main
-                        '''
-                    }
-                }
+                    git -c http.extraheader="AUTHORIZATION: basic $AUTH" \
+                        push origin HEAD:main
+                '''
             }
         }
     }
+}
+
 
     post {
         success {
