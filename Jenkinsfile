@@ -184,3 +184,4 @@ stage('Update Kubernetes Manifest') {
         }
     }
 }
+}
