@@ -18,7 +18,7 @@ pipeline {
         stage('Checkout') {
             steps {
                 script {
-                    env.IMAGE_TAG = env.GIT_COMMIT.take(7)
+                    env.IMAGE_TAG = "${env.GIT_COMMIT.take(7)}-${env.BUILD_NUMBER}"
                     echo "Building image tag: ${env.IMAGE_TAG}"
                 }
             }
